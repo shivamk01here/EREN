@@ -1,27 +1,30 @@
-from core.client import Client
-from prompts.system import SYSTEM_PROMPT
-
+from core.providers import get_provider
 
 def main():
-    client = Client()
-    history = []
-
-    print("Eren is online. Type 'exit' to quit.\n")
-
+    try:
+        provider = get_provider()
+        print(f"[SYSTEM] Eren initialized. Backend: {provider.__class__.__name__}")
+        print("[SYSTEM] Awaiting input. (Type 'exit' to terminate)")
+    except Exception as e:
+        print(f"[CRITICAL] {e}")
+        return
+    
     while True:
-        user_input = input("you> ").strip()
-        if user_input.lower() in ("exit", "quit"):
+        user_input = input("\n> ")
+        
+        if user_input.strip().lower() in ['exit', 'quit']:
+            print("[SYSTEM] Shutting down.")
             break
-        if not user_input:
+            
+        if not user_input.strip():
             continue
 
-        history.append({"role": "user", "content": user_input})
-
-        reply = client.send(SYSTEM_PROMPT, history)
-        print(f"eren> {reply}\n")
-
-        history.append({"role": "assistant", "content": reply})
-
+        try:
+            # Look how clean the execution is. The interface hides the HTTP complexity.
+            response = provider.generate(user_input)
+            print(f"\n[Eren]\n{response}")
+        except Exception as e:
+            print(f"\n[ERROR] {e}")
 
 if __name__ == "__main__":
     main()
